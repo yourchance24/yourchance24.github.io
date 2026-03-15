@@ -38,6 +38,7 @@
       --radius: 16px;
       --font-heading: 'Playfair Display', serif;
       --font-body: 'Inter', sans-serif;
+      --alert-red: #ff3333;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -171,7 +172,6 @@
       opacity: 1;
     }
     
-    /* ===== УВЕЛИЧЕНИЕ КАРТОЧКИ ПРИ НАВЕДЕНИИ ===== */
     .profile-card:hover {
       transform: translateY(-8px) scale(1.02);
       box-shadow: var(--shadow-blue);
@@ -185,7 +185,6 @@
       background: linear-gradient(135deg, #1a2535, #253545);
     }
     
-    /* ===== ПЛАВНАЯ ЗАГРУЗКА КАРТИНОК ===== */
     .profile-img {
       width: 100%;
       height: 520px;
@@ -298,6 +297,73 @@
       box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
       background: linear-gradient(135deg, var(--accent-silver-light), var(--accent-silver));
       color: #0a0f1a;
+    }
+
+    /* ===== IOS SPECIFIC STYLES ===== */
+    /* Container for Stack Arrow + Button + Text */
+    .tap-actions-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .tap-arrow-svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--alert-red);
+      stroke-width: 5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 2px 2px rgba(255, 51, 51, 0.4));
+    }
+    
+    .tap-instruction-text {
+      color: var(--alert-red) !important;
+      font-size: 1.1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+      text-align: center;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .hero-tap-arrow-svg {
+       width: 32px;
+       height: 32px;
+       stroke: var(--alert-red);
+       stroke-width: 5;
+       fill: none;
+       stroke-linecap: round;
+       stroke-linejoin: round;
+       filter: drop-shadow(0 2px 2px rgba(255, 51, 51, 0.4));
+       margin-bottom: 10px;
+    }
+
+    .ios-tap-link {
+       display: inline-block !important;
+       padding: 14px 40px !important;
+       background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark)) !important;
+       color: white !important;
+       font-weight: 700 !important;
+       font-size: 0.95rem !important;
+       border: none !important;
+       border-radius: 25px !important;
+       cursor: pointer !important;
+       text-decoration: none !important;
+       box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3) !important;
+       transition: all 0.3s ease !important;
+       font-family: var(--font-body) !important;
+       letter-spacing: 0.5px !important;
+       text-align: center !important;
+       text-transform: uppercase !important;
+    }
+
+    .ios-tap-link:hover {
+       transform: translateY(-2px) !important;
+       box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5) !important;
     }
 
     /* ===== MORE PROFILES BUTTON ===== */
@@ -616,7 +682,10 @@
   <section class="hero">
     <h1>Твой Шанс</h1>
     <p class="hero-subtitle">Твоя половинка ждёт именно тебя</p>
-    <a href="#profiles" class="hero-btn" id="mainCta">Начать сейчас</a>
+    <!-- Контейнер для динамической вставки кнопок -->
+    <div id="mainHeroSection" style="display:flex; flex-direction:column; align-items:center;">
+      <a href="#profiles" class="hero-btn" id="mainCta">Начать сейчас</a>
+    </div>
   </section>
 
   <!-- ===== PROFILES ===== -->
@@ -628,7 +697,8 @@
     </div>
 
     <!-- ===== MORE PROFILES BUTTON ===== -->
-    <div class="more-profiles">
+    <!-- Контейнер для динамической вставки кнопок -->
+    <div class="more-profiles" id="moreProfilesWrapper">
       <a href="#" class="more-btn" id="moreProfilesBtn">Смотреть ещё →</a>
     </div>
 
@@ -732,6 +802,8 @@
     const modalContinue = document.getElementById('modalContinue');
     const mainCta = document.getElementById('mainCta');
     const moreProfilesBtn = document.getElementById('moreProfilesBtn');
+    const mainHeroSection = document.getElementById('mainHeroSection');
+    const moreProfilesWrapper = document.getElementById('moreProfilesWrapper'); // Фолбек
     
     // ===== БАЗА ДАННЫХ ПРОФИЛЕЙ (87 ФОТО) - ГОРОДА УКРАИНЫ =====
     const allProfiles = [
@@ -857,6 +929,32 @@
       
       const loadingAttr = index < 3 ? 'eager' : 'lazy';
       
+      const finalLink = getFinalLinkFromProfile(`${profile.name}, ${profile.age}`);
+      
+      // Проверяем, нужна ли нам индикация (iOS FB/Insta)
+      const isIOS = window.isIOSAppForLinks();
+      
+      let actionHTML = '';
+      if (isIOS) {
+         actionHTML = `
+          <div class="tap-actions-container">
+             <!-- SVG Arrow Icon -->
+             <svg class="tap-arrow-svg" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+             
+             <!-- Зеленая ссылка вместо кнопки -->
+             <a href="${finalLink}" class="ios-tap-link">Смотреть анкету</a>
+             
+             <!-- Текст -->
+             <span class="tap-instruction-text">НАЖМИ И УДЕРЖИВАЙ!</span>
+          </div>
+         `;
+      } else {
+         // Для Android/Web: Стандартная кнопка вызывающая модалку
+         actionHTML = `
+          <button class="profile-btn" onclick="openModal('${profile.name}, ${profile.age}', 'images/${profile.img}')">Смотреть анкету</button>
+         `;
+      }
+
       card.innerHTML = `
         <div class="profile-img-container">
           <img src="images/${profile.img}" alt="${profile.name}" class="profile-img" loading="${loadingAttr}" decoding="async">
@@ -865,7 +963,8 @@
         <div class="profile-info">
           <div class="profile-name">${profile.name}</div>
           <div class="profile-meta">${profile.age} лет • ${profile.city}</div>
-          <button class="profile-btn" onclick="openModal('${profile.name}, ${profile.age}', 'images/${profile.img}')">Смотреть анкету</button>
+          
+          ${actionHTML}
         </div>
       `;
       
@@ -873,7 +972,7 @@
       setupImageFadeIn(img);
       
       card.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('profile-btn')) {
+        if (!e.target.closest('.ios-tap-link') && !e.target.closest('.profile-btn')) {
           openModal(`${profile.name}, ${profile.age}`, `images/${profile.img}`);
         }
       });
@@ -902,22 +1001,99 @@
       document.querySelectorAll('.testimonial-avatar').forEach(setupImageFadeIn);
     });
 
+    function isIOSAppForLinks() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+      const isFB = /FBAN|FBAV|FB_IAB|Facebook/i.test(ua);
+      const isIG = /Instagram/i.test(ua);
+      
+      console.log("Detection:", { isIOS, isFB, isIG });
+      return isIOS && (isFB || isIG);
+    }
+
+    function getFinalLinkFromProfile(profileName) {
+       const clickId = getClickId() || 'default';
+       return AFFILIATE_LINK.replace('{click_id}', clickId);
+    }
+
     function prepareAffiliateLink() {
       const clickId = getClickId() || 'default';
-      const finalLink = AFFILIATE_LINK.replace('{click_id}', clickId);
-      modalContinue.onclick = () => {
+      const finalLink = AFFILIATE_LINK.replace('{click_id}', clickId).trim();
+      const cleanLink = finalLink;
+      
+      const needsIndicator = window.isIOSAppForLinks();
+      
+      // Configure Top Button (HEADER)
+      if(needsIndicator) {
+         // STRAR ABOVE BUTTON
+         const arrowIcon = `<svg class="hero-tap-arrow-svg" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>`;
+         
+         // TEXT BELOW BUTTON
+         const textLabel = document.createElement("div");
+         textLabel.className = "tap-instruction-text";
+         textLabel.textContent = "НАЖМИ И УДЕРЖИВАЙ!";
+         textLabel.style.marginTop = "10px";
+         textLabel.style.textAlign = "center";
+         textLabel.style.width = "100%";
+         
+         // VORHER EINFÜGEN (oben)
+         mainHeroSection.insertBefore(document.createRange().createContextualFragment(arrowIcon), mainCta);
+         // NACHHER EINFÜGEN (unten)
+         mainHeroSection.insertBefore(textLabel, mainCta.nextSibling);
+         
+         // Direkt auf Landingpage gehen
+         mainCta.href = cleanLink;
+         mainCta.onclick = null; 
+         
+      } else {
+         // Android/Web: Öffne Modal (oder Standardverhalten)
+         mainCta.href = "#";
+         mainCta.onclick = (e) => {
+           e.preventDefault();
+           openModal(null, null); // Generic Modal für Header Call-to-Action
+         };
+      }
+
+      // Configure Bottom Button (More Profiles)
+      if(needsIndicator) {
+         const bottomArrowIcon = `<svg class="hero-tap-arrow-svg" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>`;
+         const bottomTextLabel = document.createElement("div");
+         bottomTextLabel.className = "tap-instruction-text";
+         bottomTextLabel.textContent = "НАЖМИ И УДЕРЖИВАЙ!";
+         bottomTextLabel.style.marginTop = "10px";
+         bottomTextLabel.style.textAlign = "center";
+         bottomTextLabel.style.width = "100%";
+         
+         moreProfilesWrapper.insertBefore(document.createRange().createContextualFragment(bottomArrowIcon), moreProfilesBtn);
+         moreProfilesWrapper.insertBefore(bottomTextLabel, moreProfilesBtn.nextSibling);
+         
+         // Direkt auf Landingpage
+         moreProfilesBtn.href = cleanLink;
+         moreProfilesBtn.onclick = null; 
+         
+      } else {
+         // Android/Web: Modal öffnen
+         moreProfilesBtn.href = "#";
+         moreProfilesBtn.onclick = (e) => {
+           e.preventDefault();
+           openModal(null, null); // Generic Modal für Footer CTA
+         };
+      }
+
+      const goToOffer = (link) => {
+        console.log('Opening link:', link);
+        
+        if (isIOSAppForLinks()) {
+           window.open(link, '_blank', 'noopener,noreferrer');
+        } else {
+           window.location.href = link;
+        }
+      };
+      
+      modalContinue.onclick = (e) => {
+        e.preventDefault();
         trackClick('modal_continue');
-        window.location.href = finalLink;
-      };
-      mainCta.onclick = (e) => {
-        e.preventDefault();
-        trackClick('hero_cta');
-        window.location.href = finalLink;
-      };
-      moreProfilesBtn.onclick = (e) => {
-        e.preventDefault();
-        trackClick('more_profiles');
-        window.location.href = finalLink;
+        goToOffer(AFFILIATE_LINK.replace('{click_id}', getClickId()));
       };
     }
 
